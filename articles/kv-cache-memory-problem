@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="Everyone's racing to build 1M-token models. But the real question is: where is all that context actually going?"/>
+<meta property="og:title" content="The Memory Problem Nobody Talks About in Long-Context AI"/>
+<meta property="og:description" content="Everyone's racing to build 1M-token models. But the real question is: where is all that context actually going?"/>
+<meta property="og:type" content="article"/>
+<title>The Memory Problem Nobody Talks About — Arjun Anapalli</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Spectral:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#f8f6f1;--bg2:#f1ede4;--ink:#1c1917;--ink2:#44403c;--ink3:#78716c;--accent:#c2410c;--accent2:#ea580c;--rule:#e2ddd6;--serif:'Playfair Display',Georgia,serif;--body:'Spectral',Georgia,serif;--mono:'JetBrains Mono',monospace;--max:720px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;}
+a{color:inherit;text-decoration:none;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(248,246,241,0.93);backdrop-filter:blur(12px);border-bottom:1px solid var(--rule);}
+.nav-inner{max-width:1100px;margin:0 auto;padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{font-family:var(--serif);font-size:20px;font-weight:700;letter-spacing:-0.02em;}
+.nav-logo span{color:var(--accent);}
+.nav-logo a{color:var(--ink);}
+.back-link{font-family:var(--mono);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink3);display:flex;align-items:center;gap:8px;transition:color .2s;}
+.back-link:hover{color:var(--accent);}
+.back-link::before{content:'←';}
+
+/* ARTICLE */
+.article-wrap{max-width:var(--max);margin:0 auto;padding:100px 32px 100px;}
+@media(max-width:600px){.article-wrap{padding:80px 20px 60px;}}
+
+.art-meta{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+.art-topic{font-family:var(--mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);}
+.art-date{font-family:var(--mono);font-size:11px;color:var(--ink3);}
+.sep{width:3px;height:3px;border-radius:50%;background:var(--rule);display:inline-block;}
+
+h1{font-family:var(--serif);font-size:clamp(28px,4.5vw,46px);font-weight:700;letter-spacing:-0.02em;line-height:1.15;margin-bottom:24px;color:var(--ink);}
+
+.byline{display:flex;align-items:center;gap:14px;padding:20px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:52px;}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#9a3412);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:700;font-size:17px;color:#fff;flex-shrink:0;}
+.byline-info strong{font-size:14px;color:var(--ink);display:block;}
+.byline-info span{font-size:13px;color:var(--ink3);}
+
+/* BODY */
+.art-body p{font-size:18px;color:var(--ink2);line-height:1.9;margin-bottom:24px;}
+.art-body p strong{color:var(--ink);}
+.art-body p em{font-style:italic;}
+.art-body h2{font-family:var(--serif);font-size:clamp(22px,3vw,28px);font-weight:700;color:var(--ink);margin:52px 0 18px;letter-spacing:-0.01em;line-height:1.2;}
+.art-body blockquote{border-left:3px solid var(--accent);padding:16px 26px;margin:40px 0;background:#fdf5f0;border-radius:0 8px 8px 0;}
+.art-body blockquote p{font-family:var(--serif);font-style:italic;font-size:20px;color:var(--ink);margin:0;line-height:1.6;}
+.art-body ul{margin:0 0 24px 24px;}
+.art-body ul li{font-size:18px;color:var(--ink2);line-height:1.8;margin-bottom:8px;}
+.art-body hr{border:none;border-top:1px solid var(--rule);margin:48px 0;}
+
+/* FOOTER */
+.art-footer{border-top:1px solid var(--rule);margin-top:72px;padding-top:40px;display:flex;flex-direction:column;gap:28px;}
+.art-footer-back{font-family:var(--mono);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);display:inline-flex;align-items:center;gap:8px;}
+.art-footer-back::before{content:'←';}
+.art-footer-back:hover{text-decoration:underline;}
+.art-author-card{background:var(--bg2);border:1px solid var(--rule);border-radius:12px;padding:28px;display:flex;gap:18px;align-items:flex-start;}
+.author-avatar-lg{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#9a3412);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:700;font-size:20px;color:#fff;flex-shrink:0;}
+.author-card-info strong{font-family:var(--serif);font-size:17px;font-weight:700;display:block;margin-bottom:4px;}
+.author-card-info span{font-size:14px;color:var(--ink3);display:block;margin-bottom:10px;}
+.author-card-info p{font-size:15px;color:var(--ink2);line-height:1.65;margin:0;}
+
+/* page footer */
+footer{border-top:1px solid var(--rule);padding:32px;background:var(--bg2);margin-top:80px;}
+.footer-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.footer-name{font-family:var(--serif);font-size:16px;font-weight:700;}
+.footer-name span{color:var(--accent);}
+.footer-copy{font-family:var(--mono);font-size:11px;color:var(--ink3);}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.visible{opacity:1;transform:none;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo"><a href="../index.html">Arjun<span>.</span></a></div>
+    <a class="back-link" href="../index.html">All writing</a>
+  </div>
+</nav>
+
+<div class="article-wrap">
+
+  <div class="art-meta reveal">
+    <span class="art-topic">LLMs · Memory</span>
+    <span class="sep"></span>
+    <span class="art-date">March 2025</span>
+  </div>
+
+  <h1 class="reveal">The Memory Problem Nobody Talks About in Long-Context AI</h1>
+
+  <div class="byline reveal">
+    <div class="avatar">A</div>
+    <div class="byline-info">
+      <strong>Arjun Anapalli</strong>
+      <span>ML Researcher · Educator · CEO, The CorporateWorms</span>
+    </div>
+  </div>
+
+  <div class="art-body">
+
+    <p class="reveal">100K tokens. 1M tokens. "Near-infinite memory." The benchmarks look great. The demos feel magical. And I genuinely think this direction matters — long-context AI is going to unlock a lot.</p>
+
+    <p class="reveal">But when I started reading about how these systems actually work under the hood, one question kept nagging at me: <strong>Where is all of this going?</strong> Not philosophically. Literally — where is it stored, and what does that cost?</p>
+
+    <blockquote class="reveal"><p>"What looks like 'longer context' on the surface is, underneath, a memory scaling problem waiting to hit a wall."</p></blockquote>
+
+    <h2 class="reveal">Meet the KV Cache — the thing doing all the heavy lifting</h2>
+
+    <p class="reveal">Every time an LLM processes text, it builds something called a <strong>KV cache</strong> — Key-Value cache. Think of it as the model's working memory: a running record of information it stores so it doesn't have to re-process earlier tokens from scratch at every step.</p>
+
+    <p class="reveal">Sounds harmless. And at small scales, it is. But here's the problem: this memory doesn't grow neatly. It grows in every direction at once. More tokens means more storage. More layers means that storage duplicates across each one. More attention heads means it duplicates again. By the time you're running inference on a 100K-token context, a meaningful chunk of your GPU memory isn't doing clever reasoning — it's just holding the KV cache.</p>
+
+    <p class="reveal">That's the wall. Not the model's intelligence. The memory it needs to operate.</p>
+
+    <h2 class="reveal">Then I came across a paper that asked the right question</h2>
+
+    <p class="reveal">I was reading an arXiv preprint — an ICLR 2026 submission — and what made me stop was that it didn't try to build a new model. It went somewhere more fundamental. The authors asked: <strong>"Are we storing more than we actually need?"</strong></p>
+
+    <p class="reveal">That reframe matters. Instead of asking "how do we scale memory further?" they asked "how much of this memory is even necessary?" — and that's a completely different problem to solve. Most prior work on KV cache compression treated it like a simple reduction problem: compress keys one way, compress values another, handle each layer independently. It works, to an extent. But it leaves something on the table.</p>
+
+    <h2 class="reveal">What they found when they actually looked at the structure</h2>
+
+    <p class="reveal">If you look at the key-value representations across different attention heads and layers in a transformer, they look <em>distinct</em>. Different patterns, different activations, different behaviors. That's what you'd expect.</p>
+
+    <p class="reveal">But the authors tried aligning them first — bringing the representations into a shared space — before drawing conclusions. And when they did that, something unexpected showed up. The representations became <strong>surprisingly similar</strong>. Not identical, but close enough to raise a real question: what if a lot of what large models store internally is the same information, just wearing different clothes across layers?</p>
+
+    <p class="reveal">That's not a minor detail. That's a crack in a core assumption about how transformers organize knowledge. If different heads are doing subtle variations of the same thing, then storing each one independently means we're paying for redundancy we never knew existed.</p>
+
+    <h2 class="reveal">What they built — and why it's elegant</h2>
+
+    <p class="reveal">Once you can see the redundancy, you can compress it intelligently. The method works in three steps:</p>
+
+    <p class="reveal">First, <strong>align representations</strong> across layers and heads so the shared structure becomes visible — you can't compress what you can't see. Then apply <strong>SVD</strong> — a dimensionality reduction technique — to extract what actually matters and discard what's repeated. Think of it as finding the spine of the information. Finally, <strong>quantize dynamically</strong>: a optimization strategy decides how much precision each component genuinely needs, so critical information is protected and redundant parts are compressed hard.</p>
+
+    <p class="reveal">This isn't brute-force compression. It's structured, informed compression — built on understanding <em>why</em> the redundancy exists before trying to remove it.</p>
+
+    <h2 class="reveal">The numbers — and why they surprised me</h2>
+
+    <p class="reveal">Memory reduction of 30× to 60×, in some configurations even more — with performance largely intact. Usually when you compress this aggressively, the model starts to forget things, lose coherence on long inputs. The fact that degradation here is minimal isn't just a nice result. It's validation that the redundancy they identified was <em>real</em>, and not load-bearing.</p>
+
+    <p class="reveal">To put 32–64× in context: if a baseline KV cache for a long-context run takes 64GB of memory, the compressed version might take 1–2GB. That's the difference between needing specialized hardware and running on something practical.</p>
+
+    <h2 class="reveal">The part that actually stayed with me</h2>
+
+    <p class="reveal">This paper isn't really about compression. It's about what the compression reveals. Large language models may be carrying significantly more internal redundancy than we've assumed. Different heads, different layers — all doing slight variations of the same thing, without us noticing because we never tried to align them first.</p>
+
+    <blockquote class="reveal"><p>"Maybe we don't always need more. Maybe we just need to stop storing the same thing 100 different ways."</p></blockquote>
+
+    <p class="reveal">Right now, the dominant story about AI progress is: bigger models, longer context, more compute. This paper quietly points somewhere else — better utilization of what already exists. Remove what isn't needed. Compress what's repeated. Not add more — subtract smarter.</p>
+
+    <p class="reveal">This isn't flashy work. There's no new architecture to tweet about. But it solves a problem that every large-scale system is already silently facing. And if long-context AI is going to move from impressive demos to practical infrastructure — the kind that runs efficiently at scale — then memory efficiency is exactly where the leverage is.</p>
+
+  </div>
+
+  <div class="art-footer reveal">
+    <a class="art-footer-back" href="../index.html">Back to all writing</a>
+    <div class="art-author-card">
+      <div class="author-avatar-lg">A</div>
+      <div class="author-card-info">
+        <strong>Arjun Anapalli</strong>
+        <span>ML Researcher · Educator · CEO, The CorporateWorms</span>
+        <p>I write about machine learning research in a way that actually makes sense. If something here was useful, I'd love to hear from you.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-name">Arjun<span>.</span></div>
+    <div class="footer-copy">© 2025 Arjun Anapalli</div>
+  </div>
+</footer>
+
+<script>
+const ro = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
+</script>
+</body>
+</html>
